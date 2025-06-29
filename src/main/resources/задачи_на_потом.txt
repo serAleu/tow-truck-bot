@@ -1,0 +1,1 @@
+1) добавить мониторинг очереди потоков че то типа ((ThreadPoolExecutor)executor).getQueue().size()
