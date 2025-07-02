@@ -76,8 +76,7 @@ public class TelegramService {
         // Отправляем подтверждение пользователю
         return sendConfirmation(chatId, new TelegramUserLocation()
                 .setLatitude(latitude)
-                .setLongitude(longitude)
-                .setCurrentState(ChatState.LOCATION_RECEIVED));
+                .setLongitude(longitude));
     }
 
     private SendMessage sendConfirmation(Long chatId, TelegramUserLocation userLocation) {

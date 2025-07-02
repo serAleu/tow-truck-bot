@@ -1,5 +1,6 @@
 package ru.ser_aleu.tow_truck_bot.events.listener;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
@@ -7,10 +8,14 @@ import org.springframework.stereotype.Component;
 import ru.ser_aleu.tow_truck_bot.events.dto.LocationProvidedEvent;
 import ru.ser_aleu.tow_truck_bot.events.dto.OrderCalculationEvent;
 import ru.ser_aleu.tow_truck_bot.exceptions.EventProcessingException;
+import ru.ser_aleu.tow_truck_bot.telegram.service.TelegramService;
 
 @Component
 @Slf4j
+@RequiredArgsConstructor
 public class TowTruckEventsListener {
+
+    private final TelegramService telegramService;
 
     @Async("eventTaskExecutor")
     @EventListener
