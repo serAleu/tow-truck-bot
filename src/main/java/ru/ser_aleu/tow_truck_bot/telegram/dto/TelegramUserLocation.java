@@ -11,7 +11,6 @@ import ru.ser_aleu.tow_truck_bot.telegram.enums.ChatState;
 @Accessors(chain = true)
 @ToString
 public class TelegramUserLocation {
-    private ChatState currentState = ChatState.START;
     private Double latitude;
     private Double longitude;
     private String carType;
