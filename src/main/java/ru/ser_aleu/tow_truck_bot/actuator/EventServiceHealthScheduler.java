@@ -19,7 +19,7 @@ public class EventServiceHealthScheduler {
 
     // Проверка каждый час в начале часа (00:00, 01:00 и т.д.)
 //    @Scheduled(cron = "0 0 * * * *")
-    @Scheduled(fixedDelay = 1000)
+    @Scheduled(fixedDelay = 360000)
     public void hourlyHealthCheck() {
         Health health = executorHealthIndicator.health();
         Status status = health.getStatus();

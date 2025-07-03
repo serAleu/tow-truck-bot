@@ -20,6 +20,9 @@ public class TowTruckConfiguration {
     @Value("${telegram.forbidden-words.path}")
     private String telegramForbiddenWordsPath;
 
+    @Value("${telegram.black-listed-telegram-names.path}")
+    private String telegramBlackListedTelegramNamesPath;
+
     @Bean("forbiddenWords")
     public List<String> forbiddenWords() {
         List<String> forbiddenWords = new ArrayList<>();
@@ -29,6 +32,19 @@ public class TowTruckConfiguration {
             }
         } catch (Exception e) {
             log.error("Error while forbidden words reading. {}", getStackTrace(e));
+        }
+        return forbiddenWords;
+    }
+
+    @Bean("blackListedTelegramNames")
+    public List<String> blackListedTelegramNames() {
+        List<String> forbiddenWords = new ArrayList<>();
+        try(BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(telegramBlackListedTelegramNamesPath)))) {
+            while (reader.ready()) {
+                forbiddenWords.add(reader.readLine());
+            }
+        } catch (Exception e) {
+            log.error("Error while black listed telegram names reading. {}", getStackTrace(e));
         }
         return forbiddenWords;
     }

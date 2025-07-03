@@ -13,6 +13,22 @@ public class EventPublisher {
 
     private final ApplicationEventPublisher applicationEventPublisher;
 
+    public void publishBotStartedEvent(BotStartedEvent event) {
+        applicationEventPublisher.publishEvent(event);
+    }
+
+    public void publishUserRegisteredEvent(UserRegisteredEvent event) {
+        applicationEventPublisher.publishEvent(event);
+    }
+
+    public void publishFraudDetectionEvent(FraudDetectionEvent event) {
+        applicationEventPublisher.publishEvent(event);
+    }
+
+    public void publishVehicleTypeSelectedEvent(VehicleTypeSelectedEvent event) {
+        applicationEventPublisher.publishEvent(event);
+    }
+
     public void publishOrderCalculationEvent(OrderCalculationEvent event) {
         applicationEventPublisher.publishEvent(event);
     }
@@ -26,14 +42,6 @@ public class EventPublisher {
     }
 
     public void publishOrderSentToOperatorEvent(OrderSentToOperatorEvent event) {
-        applicationEventPublisher.publishEvent(event);
-    }
-
-    public void publishUserRegisteredEvent(UserRegisteredEvent event) {
-        applicationEventPublisher.publishEvent(event);
-    }
-
-    public void publishVehicleTypeSelectedEvent(VehicleTypeSelectedEvent event) {
         applicationEventPublisher.publishEvent(event);
     }
 }

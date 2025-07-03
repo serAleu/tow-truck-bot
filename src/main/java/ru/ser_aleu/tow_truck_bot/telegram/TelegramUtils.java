@@ -47,15 +47,15 @@ public class TelegramUtils {
 
 
     public void updateTelegramUserMap(String message, ChatState step, TelegramUser user) {
-        if(user.getCommunications() != null) {
-            user.getCommunications().put(step, message);
+        if(user.getUserSelections() != null) {
+//            user.getUserSelections().put(step, message);
         } else {
-            user.setCommunications(new HashMap<>() {{
-                put(step, message);
-            }});
+//            user.getUserSelections(new HashMap<>() {{
+//                put(step, message);
+//            }});
         }
-        user.getCommunications().put(step, message);
-        user.setChatState(step);
+//        user.getUserSelections().put(step, message);
+        user.setCurrentChatState(step);
         TELEGRAM_USERS_MAP.put(user.getChatId(), user);
     }
 

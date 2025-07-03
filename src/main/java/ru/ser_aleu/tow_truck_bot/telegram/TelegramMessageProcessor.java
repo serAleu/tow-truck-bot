@@ -23,7 +23,8 @@ import static ru.ser_aleu.tow_truck_bot.telegram.enums.Callback.*;
 @Slf4j
 @RequiredArgsConstructor
 @Service("telegramMessageProcessor")
-public class TelegramMessageProcessor extends TelegramLongPollingBot {
+//public class TelegramMessageProcessor extends TelegramLongPollingBot {
+public class TelegramMessageProcessor {
 
     public static final Map<Long, TelegramUser> TELEGRAM_USERS_MAP = new HashMap<>();
     private final ExecutorService executor = Executors.newFixedThreadPool(10);
@@ -55,7 +56,7 @@ public class TelegramMessageProcessor extends TelegramLongPollingBot {
         }
     }
 
-    @Override
+//    @Override
     public void onUpdateReceived(Update update) {
         try {
             if(update.getMessage().getChatId() != null) {
@@ -78,11 +79,11 @@ public class TelegramMessageProcessor extends TelegramLongPollingBot {
     }
 
     private void extractedExecute(SendMessage sendMessage) {
-        try {
-            execute(sendMessage);
-        } catch (TelegramApiException e) {
-            throw new RuntimeException(e);
-        }
+//        try {
+//            execute(sendMessage);
+//        } catch (TelegramApiException e) {
+//            throw new RuntimeException(e);
+//        }
     }
 
     private void processButtonPush(Update update) {
@@ -112,10 +113,10 @@ public class TelegramMessageProcessor extends TelegramLongPollingBot {
             Queue<Update> queue = chatQueues.computeIfAbsent(chatId, id -> new ConcurrentLinkedQueue<>());
             queue.add(update);
             if (update.getMessage().getText().equals("/start")) {
-                execute(telegramUtils.startBot(update));
+//                execute(telegramUtils.startBot(update));
                 return;
             }
-            execute(telegramService.processChatQueue(chatQueues, chatId));
+//            execute(telegramService.processChatQueue(chatQueues, chatId));
         } catch (Exception e) {
             log.error("Error while processing text message. Message = {}, chatId = {}, {}", update.getMessage(), chatId, getStackTrace(e));
         }
@@ -136,16 +137,16 @@ public class TelegramMessageProcessor extends TelegramLongPollingBot {
         SendMessage requestMessage = new SendMessage();
         requestMessage.setChatId(webTelegramAdminChatId);
         requestMessage.setText(userName + " - REQUEST: " + request + "\n" + "RESPONSE: " + response);
-        execute(requestMessage);
+//        execute(requestMessage);
         TELEGRAM_USERS_MAP.values().forEach(System.out::println);
     }
 
-    @Override
+//    @Override
     public String getBotUsername() {
         return webTelegramBotUsername;
     }
 
-    @Override
+//    @Override
     public String getBotToken() {
         return telegramBotToken;
     }
