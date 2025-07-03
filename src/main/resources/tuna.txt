@@ -1,8 +1,11 @@
 --run forwarding
-tuna http 8080 --subdomain=tow-truck-bot
+tuna http 8080 --subdomain=tow-truck-bot --ssl
 
 --change reg to nl/ru
 tuna config save-location nl
 
--set telegram webhook
+--set telegram webhook
 https://api.telegram.org/bot7895027135:AAFymL2BWKA0Ttm5FoXwpuCmXviOYhKPxj0/setWebhook?url=https://tow-truck-bot.nl.tuna.am:8443/api/telegram/webhook
+
+--check telegram webhook
+curl "https://api.telegram.org/bot7895027135:AAFymL2BWKA0Ttm5FoXwpuCmXviOYhKPxj0/getWebhookInfo"

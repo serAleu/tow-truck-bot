@@ -11,6 +11,9 @@ telegram:
     admin-chat-id: 7895027135
     auth:
       token: ${WEB_TELEGRAM_AUTH_TOKEN}
+    hook:
+      url: https://tow-truck-bot.nl.tuna.am/api/telegram/webhook
+      secret: ser_aleu_3d2a09d1-1994-482a-87b2-b9f647e64e30
   steps:
     start:
       message: |
