@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import ru.ser_aleu.tow_truck_bot.events.dto.*;
 import ru.ser_aleu.tow_truck_bot.exceptions.EventProcessingException;
 import ru.ser_aleu.tow_truck_bot.telegram.service.TelegramService;
@@ -23,6 +24,7 @@ public class TowTruckEventsListener {
     public void handleBotStartedEvent(BotStartedEvent event) {
         try {
             log.info("Processing bot started event: chat_id = {}, telegram_user = {}", event.getTelegramUser().getChatId(), event.getTelegramUser().getTelegramUserName());
+            telegramService.sendStartReply(event.getTelegramUser().getUpdate());
         } catch (Exception e) {
             log.error("Failed to process bot started event: chat_id = {}, telegram_user = {}, {}", event.getTelegramUser().getChatId(), event.getTelegramUser().getTelegramUserName(), getStackTrace(e));
             throw new EventProcessingException("Bot started event processing failed.", e);
@@ -78,6 +80,7 @@ public class TowTruckEventsListener {
     public void handleLocationProvidedEvent(LocationProvidedEvent event) {
         try {
             log.info("Processing location provided event: chat_id = {}, telegram_user = {}", event.getTelegramUser().getChatId(), event.getTelegramUser().getTelegramUserName());
+            telegramService.processRequestLocation(event.getTelegramUser().getUpdate());
         } catch (Exception e) {
             log.error("Failed to process location provided event: chat_id = {}, telegram_user = {}, {}", event.getTelegramUser().getChatId(), event.getTelegramUser().getTelegramUserName(), getStackTrace(e));
             throw new EventProcessingException("Location providing processing failed", e);
@@ -103,6 +106,30 @@ public class TowTruckEventsListener {
         } catch (Exception e) {
             log.error("Failed to process order sent to operator event: chat_id = {}, telegram_user = {}, {}", event.getTelegramUser().getChatId(), event.getTelegramUser().getTelegramUserName(), getStackTrace(e));
             throw new EventProcessingException("Order sent to operator processing failed", e);
+        }
+    }
+
+    @Async("eventTaskExecutor")
+    @EventListener
+    public void handleErrorAdminNotificationEvent(ErrorAdminNotificationEvent event) {
+        try {
+            log.info("Processing error admin notification event: chat_id = {}, telegram_user = {}", event.getTelegramUser().getChatId(), event.getTelegramUser().getTelegramUserName());
+        } catch (Exception e) {
+            log.error("Failed to error admin notification event: chat_id = {}, telegram_user = {}, {}", event.getTelegramUser().getChatId(), event.getTelegramUser().getTelegramUserName(), getStackTrace(e));
+            throw new EventProcessingException("Error admin notification failed", e);
+        }
+    }
+
+    @Async("eventTaskExecutor")
+    @EventListener
+    public void handleTextMessageEvent(TextMessageEvent event) {
+        try {
+            log.info("Processing text message event: chat_id = {}, telegram_user = {}", event.getTelegramUser().getChatId(), event.getTelegramUser().getTelegramUserName());
+            telegramService.processTextRequest(event.getTelegramUser().getUpdate());
+            telegramService.processRequestLocation(event.getTelegramUser().getUpdate());
+        } catch (Exception e) {
+            log.error("Failed to text message notification event: chat_id = {}, telegram_user = {}, {}", event.getTelegramUser().getChatId(), event.getTelegramUser().getTelegramUserName(), getStackTrace(e));
+            throw new EventProcessingException("Text message notification failed", e);
         }
     }
 }

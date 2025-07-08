@@ -44,4 +44,12 @@ public class EventPublisher {
     public void publishOrderSentToOperatorEvent(OrderSentToOperatorEvent event) {
         applicationEventPublisher.publishEvent(event);
     }
+
+    public void publishErrorAdminNotificationEvent(ErrorAdminNotificationEvent event) {
+        applicationEventPublisher.publishEvent(event);
+    }
+
+    public void publishTextMessageEvent(TextMessageEvent event) {
+        applicationEventPublisher.publishEvent(event);
+    }
 }

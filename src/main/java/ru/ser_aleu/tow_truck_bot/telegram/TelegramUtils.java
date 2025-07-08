@@ -11,19 +11,17 @@ import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
 import ru.ser_aleu.tow_truck_bot.telegram.dto.TelegramUser;
+import ru.ser_aleu.tow_truck_bot.telegram.dto.TelegramUserLocation;
 import ru.ser_aleu.tow_truck_bot.telegram.enums.ChatState;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace;
-import static ru.ser_aleu.tow_truck_bot.telegram.TelegramMessageProcessor.TELEGRAM_USERS_MAP;
-import static ru.ser_aleu.tow_truck_bot.telegram.enums.Callback.*;
+import static ru.ser_aleu.tow_truck_bot.telegram.enums.Callback.START;
 
 @Component
 @RequiredArgsConstructor
@@ -45,18 +43,20 @@ public class TelegramUtils {
     @Value("${telegram.steps.options.option2.button}")
     private String telegramStepsOptionsOption2Button;
 
-
-    public void updateTelegramUserMap(String message, ChatState step, TelegramUser user) {
-        if(user.getUserSelections() != null) {
-//            user.getUserSelections().put(step, message);
-        } else {
-//            user.getUserSelections(new HashMap<>() {{
-//                put(step, message);
-//            }});
+    public TelegramUser createTelegramUser(Update update, ChatState chatState) {
+        TelegramUser telegramUser = new TelegramUser()
+                .setCurrentChatState(chatState);
+        if (update != null && update.getMessage() != null && update.getMessage().getChatId() != null) {
+            telegramUser.setUpdate(update)
+                    .setChatId(update.getMessage().getChatId())
+                    .setTelegramUserName(update.getMessage().getFrom() != null && update.getMessage().getFrom().getUserName() != null ? update.getMessage().getFrom().getUserName() : null)
+                    .setUserName(update.getMessage().getFrom() != null && update.getMessage().getFrom().getLastName() != null ? update.getMessage().getFrom().getFirstName() + " " + update.getMessage().getFrom().getLastName() : null)
+                    .setPhoneNumber(update.getMessage().getFrom() != null && update.getMessage().getContact() != null && update.getMessage().getContact().getPhoneNumber() != null ? update.getMessage().getContact().getPhoneNumber() : null)
+                    .setUserLocation(new TelegramUserLocation()
+                            .setLatitude(update.getMessage().getLocation() != null ? update.getMessage().getLocation().getLatitude() : null)
+                            .setLongitude(update.getMessage().getLocation() != null ? update.getMessage().getLocation().getLongitude() : null));
         }
-//        user.getUserSelections().put(step, message);
-        user.setCurrentChatState(step);
-        TELEGRAM_USERS_MAP.put(user.getChatId(), user);
+        return telegramUser;
     }
 
     public void defineMessageText(TelegramUser user, SendMessage message) {
@@ -97,61 +97,14 @@ public class TelegramUtils {
     }
 
     public InlineKeyboardMarkup getStartButton() {
-        InlineKeyboardButton startButton = new InlineKeyboardButton();
-        startButton.setCallbackData(START.getPath());
-        startButton.setText(telegramStepsStartButton);
-        List<InlineKeyboardButton> keyboardButtonsRow = new ArrayList<>();
-        keyboardButtonsRow.add(startButton);
-        List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
-        rowList.add(keyboardButtonsRow);
-        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
-        inlineKeyboardMarkup.setKeyboard(rowList);
-        return inlineKeyboardMarkup;
-    }
-
-    public InlineKeyboardMarkup getOptionsButtons() {
-        InlineKeyboardButton dishesButton = new InlineKeyboardButton();
-        dishesButton.setCallbackData(DISHES.getPath());
-        dishesButton.setText(telegramStepsOptionsDishesButton);
-
-        InlineKeyboardButton option1Button = new InlineKeyboardButton();
-        option1Button.setCallbackData(OPTION1.getPath());
-        option1Button.setText(telegramStepsOptionsOption1Button);
-
-        InlineKeyboardButton option2Button = new InlineKeyboardButton();
-        option2Button.setCallbackData(OPTION2.getPath());
-        option2Button.setText(telegramStepsOptionsOption2Button);
-
-        List<InlineKeyboardButton> keyboardButtonsRow1 = Collections.singletonList(dishesButton);
-        List<InlineKeyboardButton> keyboardButtonsRow2 = Collections.singletonList(option1Button);
-        List<InlineKeyboardButton> keyboardButtonsRow3 = Collections.singletonList(option2Button);
-
-        List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
-        rowList.add(keyboardButtonsRow1);
-        rowList.add(keyboardButtonsRow2);
-        rowList.add(keyboardButtonsRow3);
-
-        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
-        inlineKeyboardMarkup.setKeyboard(rowList);
-        return inlineKeyboardMarkup;
-    }
-
-    public void addUser(Update update, Long chatId) {
-        TelegramUser user = TELEGRAM_USERS_MAP.get(chatId);
-        if (user == null || StringUtils.isEmpty(user.getUserName()) || user.getChatId() == null) {
-            if(update.hasMessage()) {
-                user = new TelegramUser().setUserName(update.getMessage().getFrom().getFirstName());
-            } else if (update.hasCallbackQuery()) {
-                user = new TelegramUser().setUserName(update.getCallbackQuery().getFrom().getUserName());
-            } else return;
-            user.setChatId(chatId);
-        }
-        if(update.hasMessage() && isRequestContainForbiddenWord(update.getMessage().getText())) {
-//            user.setCommunications(new HashMap<>() {{
-//                put(STUPID_USER_RESPONSE, update.getMessage().getText());
-//            }}).setCurrentCommunicationStep(STUPID_USER_RESPONSE);
-//            updateTelegramUserMap(gigachatWebErrorsStupidUser, STUPID_USER_RESPONSE, user);
-        }
-        TELEGRAM_USERS_MAP.put(user.getChatId(), user);
+        InlineKeyboardButton startButton = InlineKeyboardButton.builder()
+                .callbackData(START.getPath())
+                .text(telegramStepsStartButton)
+                .build();
+        InlineKeyboardRow inlineKeyboardRow = new InlineKeyboardRow();
+        inlineKeyboardRow.add(startButton);
+        return InlineKeyboardMarkup.builder()
+                .keyboardRow(inlineKeyboardRow)
+                .build();
     }
 }

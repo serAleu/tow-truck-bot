@@ -13,5 +13,4 @@ import ru.ser_aleu.tow_truck_bot.telegram.enums.ChatState;
 public class TelegramUserLocation {
     private Double latitude;
     private Double longitude;
-    private String carType;
 }

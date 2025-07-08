@@ -21,8 +21,10 @@ telegram:
       button: отдать семки
       image-path: src/main/resources/telegram/start_image.jpg
     options:
+      error-text: |
+        Упс, мне смазывают шестеренки, позвоните, пожалуйста по этому номеру для заказа эвакуатора: 8(909)-999-99-99
       message: |
-       тебе чего?
+        тебе чего?
       dishes:
         message: |
           Тестовое сообщение

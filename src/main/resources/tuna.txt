@@ -1,5 +1,5 @@
 --run forwarding
-tuna http 8080 --subdomain=tow-truck-bot --ssl
+tuna http 8080 --subdomain=tow-truck-bot
 
 --change reg to nl/ru
 tuna config save-location nl

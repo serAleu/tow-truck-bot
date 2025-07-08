@@ -31,13 +31,13 @@ public class TelegramWebhookSetter {
     @Value("${telegram.web.hook.secret}")
     private String webhookSecret;
 
-//    @PostConstruct
+    @PostConstruct
     public void setTelegramWebhook() {
         TelegramWebhookResponse telegramWebhookResponse = null;
         try {
             String url = UriComponentsBuilder.fromUriString("https://api.telegram.org/bot" + telegramWebAuthToken + "/setWebhook")
                     .queryParam("url", webhookPath)
-                    .queryParam("secret_token",webhookSecret)
+                    .queryParam("secret_token", webhookSecret)
                     .toUriString();
             ResponseEntity<String> response = restTemplate.postForEntity(url,null, String.class);
             telegramWebhookResponse = mapper.readValue(response.getBody(), TelegramWebhookResponse.class);
@@ -46,9 +46,9 @@ public class TelegramWebhookSetter {
         }
         if (telegramWebhookResponse == null || Boolean.FALSE.equals(telegramWebhookResponse.isOk())) {
             int exitCode = SpringApplication.exit(appContext, () -> 0);
-            log.error("Telegram webhook wasn't set successfully. Application will stop working! Webhook url = {}, secret = {}", webhookPath, webhookSecret);
+            log.error("Telegram webhook wasn't set successfully. Application will stop working! Webhook url = {}", webhookPath);
             System.exit(exitCode);
         }
-        log.info("Telegram webhook was set successfully! Webhook setting status = {}, webhook url = {}, secret = {}", telegramWebhookResponse.isOk(), webhookPath, webhookSecret);
+        log.info("Telegram webhook was set successfully! Webhook setting status = {}, webhook url = {}", telegramWebhookResponse.isOk(), webhookPath);
     }
 }

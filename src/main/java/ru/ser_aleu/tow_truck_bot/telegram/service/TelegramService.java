@@ -1,64 +1,94 @@
 package ru.ser_aleu.tow_truck_bot.telegram.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.objects.Location;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
+import ru.ser_aleu.tow_truck_bot.telegram.TelegramUtils;
 import ru.ser_aleu.tow_truck_bot.telegram.dto.TelegramUserLocation;
-import ru.ser_aleu.tow_truck_bot.telegram.enums.ChatState;
+import ru.ser_aleu.tow_truck_bot.telegram.web.TelegramMessageSender;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
+import static org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace;
+import static ru.ser_aleu.tow_truck_bot.telegram.enums.Callback.*;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class TelegramService {
 
+    @Value("${telegram.web.bot-username}")
+    private String webTelegramBotUsername;
+    @Value("${telegram.steps.options.error-text}")
+    private String webTelegramErrorText;
+    @Value("${telegram.web.admin-chat-id}")
+    private Long webTelegramAdminChatId;
+    @Value("${telegram.steps.options.message}")
+    private String telegramStepsOptionsMessage;
+    @Value("${telegram.steps.options.dishes.message}")
+    private String telegramStepsOptionsDishesMessage;
+
+    private final TelegramMessageSender messageSender;
+    private final TelegramUtils telegramUtils;
+    private final Map<Long, Queue<Update>> chatQueues = new ConcurrentHashMap<>();
+
     public SendMessage processChatQueue(Map<Long, Queue<Update>> chatQueues, Long chatId) {
-        SendMessage sendMessage = new SendMessage();
+        SendMessage sendMessage = SendMessage.builder()
+                .chatId(chatId)
+                .text(webTelegramErrorText)
+                .build();
         Queue<Update> queue = chatQueues.get(chatId);
         Update update;
         while ((update = queue.poll()) != null) {
             try {
-                processSingleUpdate(update, sendMessage);
+                sendMessage = SendMessage.builder()
+                        .chatId(chatId)
+                        .text("Processing chat_id = " + chatId + " text = " + update.getMessage().getText())
+                        .build();
             } catch (Exception e) {
                 log.error("Error processing update in chat " + chatId, e);
             }
         }
-
-        // Удаляем пустую очередь для освобождения памяти
         if (queue.isEmpty()) {
             chatQueues.remove(chatId, queue);
         }
         return sendMessage;
     }
 
-    public SendMessage requestLocation(Update update) {
-        ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
+    public void processRequestLocation(Update update) {
+        ReplyKeyboardMarkup keyboardMarkup = ReplyKeyboardMarkup.builder()
+                .build();
         keyboardMarkup.setOneTimeKeyboard(true);
         keyboardMarkup.setResizeKeyboard(true);
 
         KeyboardRow keyboardRow = new KeyboardRow();
-        KeyboardButton locationButton = new KeyboardButton();
-        locationButton.setText("Поделиться местоположением");
-        locationButton.setRequestLocation(true);
+        KeyboardButton locationButton = KeyboardButton.builder()
+                .text("Поделиться местоположением")
+                .requestLocation(true)
+                .build();
         keyboardRow.add(locationButton);
 
         keyboardMarkup.setKeyboard(List.of(keyboardRow));
 
-        SendMessage message = new SendMessage();
-        message.setChatId(update.getMessage().getChatId().toString());
-        message.setText("Пожалуйста, поделитесь вашим местоположением");
-        message.setReplyMarkup(keyboardMarkup);
-        return message;
+        SendMessage sendMessage = SendMessage.builder()
+                .chatId(update.getMessage().getChatId().toString())
+                .text("Пожалуйста, поделитесь вашим местоположением")
+                .replyMarkup(keyboardMarkup)
+                .build();
+        messageSender.sendMessage(sendMessage);
     }
 
-    public SendMessage processReceivedLocation(Update update) {
+    public void processReceivedLocation(Update update) {
         double latitude = update.getMessage().getLocation().getLatitude();
         double longitude = update.getMessage().getLocation().getLongitude();
         long chatId = update.getMessage().getChatId();
@@ -70,32 +100,69 @@ public class TelegramService {
         System.out.println("Долгота: " + longitude);
         System.out.println("===============================\n");
 
+        TelegramUserLocation userLocation = new TelegramUserLocation()
+                .setLatitude(latitude)
+                .setLongitude(longitude);
+
         // Здесь можно добавить вызов API 2GIS/Яндекс.Карт
         // calculateRoute(latitude, longitude);
 
-        // Отправляем подтверждение пользователю
-        return sendConfirmation(chatId, new TelegramUserLocation()
-                .setLatitude(latitude)
-                .setLongitude(longitude));
-    }
-
-    private SendMessage sendConfirmation(Long chatId, TelegramUserLocation userLocation) {
         String responseText = String.format(
                 "Ваше местоположение получено!\nКоординаты: %.6f, %.6f\n\n" +
                         "Теперь укажите тип транспортного средства (легковой/грузовой).",
                 userLocation.getLatitude(), userLocation.getLongitude()
         );
 
-        SendMessage message = new SendMessage();
-        message.setChatId(chatId.toString());
-        message.setText(responseText);
-        return message;
+        messageSender.sendMessage(SendMessage.builder()
+                .chatId(chatId)
+                .text(responseText)
+                .build());
     }
 
-    private void processSingleUpdate(Update update, SendMessage message) {
+    private void processButtonPush(Update update) {
+        SendMessage message = SendMessage.builder()
+                .chatId(update.getCallbackQuery().getFrom().getId())
+                .text(webTelegramErrorText)
+                .build();
+        String callback = update.getCallbackQuery().getData();
+        if (callback.equalsIgnoreCase(START.getPath())) {
+            message.setText(telegramStepsOptionsMessage);
+        } else if (callback.equalsIgnoreCase(DISHES.getPath())) {
+            message.setText(telegramStepsOptionsDishesMessage);
+        } else if (callback.equalsIgnoreCase(OPTION1.getPath())) {
+            message.setText("не нажимай");
+        } else if (callback.equalsIgnoreCase(OPTION2.getPath())) {
+            message.setText("не нажимай сюда блять");
+        } else {
+            message.setText("пиздец");
+        }
+        messageSender.sendMessage(message);
+    }
+
+    public void sendStartReply(Update update) {
+        try {
+            messageSender.sendMessage(telegramUtils.startBot(update));
+        } catch (Exception e) {
+            log.error("Error while sending start reply. chatId = {}, {}", update.getMessage().getChatId(), getStackTrace(e));
+        }
+    }
+
+    public void processTextRequest(Update update) {
         Long chatId = update.getMessage().getChatId();
-        String text = update.getMessage().getText();
-        message.setChatId(chatId);
-        message.setText("Processing chat_id = " + chatId + " text = " + text);
+        try {
+            Queue<Update> queue = chatQueues.computeIfAbsent(chatId, id -> new ConcurrentLinkedQueue<>());
+            queue.add(update);
+            messageSender.sendMessage(processChatQueue(chatQueues, chatId));
+        } catch (Exception e) {
+            log.error("Error while processing text message. Message = {}, chatId = {}, {}", update.getMessage(), chatId, getStackTrace(e));
+        }
+    }
+
+    private void sendStatistics(String userName, String request, String response) {
+        SendMessage requestMessage = SendMessage.builder()
+                .chatId(webTelegramAdminChatId)
+                .text(userName + " - REQUEST: " + request + "\n" + "RESPONSE: " + response)
+                .build();
+//        execute(requestMessage);
     }
 }
