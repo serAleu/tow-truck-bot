@@ -24,7 +24,7 @@ public class TowTruckEventsListener {
     public void handleBotStartedEvent(BotStartedEvent event) {
         try {
             log.info("Processing bot started event: chat_id = {}, telegram_user = {}", event.getTelegramUser().getChatId(), event.getTelegramUser().getTelegramUserName());
-            telegramService.sendStartReply(event.getTelegramUser().getUpdate());
+            telegramService.sendStartReply(event.getTelegramUser());
         } catch (Exception e) {
             log.error("Failed to process bot started event: chat_id = {}, telegram_user = {}, {}", event.getTelegramUser().getChatId(), event.getTelegramUser().getTelegramUserName(), getStackTrace(e));
             throw new EventProcessingException("Bot started event processing failed.", e);

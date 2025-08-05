@@ -9,6 +9,7 @@ import ru.ser_aleu.tow_truck_bot.telegram.dto.TelegramUser;
 @Setter
 @Accessors(chain = true)
 public class UserRegisteredEvent extends BaseEvent{
+
     public UserRegisteredEvent(TelegramUser telegramUser) {
         super(telegramUser);
     }

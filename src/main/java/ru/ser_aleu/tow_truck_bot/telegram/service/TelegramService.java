@@ -10,6 +10,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMar
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import ru.ser_aleu.tow_truck_bot.telegram.TelegramUtils;
+import ru.ser_aleu.tow_truck_bot.telegram.dto.TelegramUser;
 import ru.ser_aleu.tow_truck_bot.telegram.dto.TelegramUserLocation;
 import ru.ser_aleu.tow_truck_bot.telegram.web.TelegramMessageSender;
 
@@ -115,12 +116,12 @@ public class TelegramService {
                 .build());
     }
 
-    public void sendStartReply(Update update) {
+    public void sendStartReply(TelegramUser telegramUser) {
         try {
-            messageSender.sendMessage(telegramUtils.getStartBotReply(update));
-            messageSender.sendMessage(telegramUtils.getVehicleTypeQuestion(update));
+            messageSender.sendMessage(telegramUtils.getStartBotReply(telegramUser));
+            messageSender.sendMessage(telegramUtils.getVehicleTypeQuestion(telegramUser));
         } catch (Exception e) {
-            log.error("Error while sending start reply. chatId = {}, {}", update.getMessage().getChatId(), getStackTrace(e));
+            log.error("Error while sending start reply. chatId = {}, {}", telegramUser.getUpdate().getMessage().getChatId(), getStackTrace(e));
         }
     }
 

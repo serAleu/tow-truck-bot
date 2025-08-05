@@ -12,6 +12,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import ru.ser_aleu.tow_truck_bot.telegram.dto.TelegramUser;
 import ru.ser_aleu.tow_truck_bot.telegram.dto.TelegramUserLocation;
+import ru.ser_aleu.tow_truck_bot.telegram.dto.TelegramUserSessionRegistry;
 import ru.ser_aleu.tow_truck_bot.telegram.enums.ChatState;
 
 import java.io.File;
@@ -27,6 +28,7 @@ public class TelegramUtils {
 
     private final List<String> forbiddenWords;
     private final InlineKeyboardMarkup vehicleTypeKeyboard;
+    private final TelegramUserSessionRegistry telegramUserSessionRegistry;
 
     @Value("${telegram.steps.questions.vehicle-type.text}")
     private String telegramVehicleTypeText;
@@ -35,12 +37,12 @@ public class TelegramUtils {
     @Value("${telegram.steps.start.image-path}")
     private String telegramStepsStartImagePath;
 
-    public TelegramUser createTelegramUser(Update update, ChatState chatState) {
-        TelegramUser telegramUser = new TelegramUser()
-                .setCurrentChatState(chatState);
-        if (update != null && update.getMessage() != null && update.getMessage().getChatId() != null) {
-            telegramUser.setUpdate(update)
-                    .setChatId(update.getMessage().getChatId())
+    public TelegramUser createOrGetTelegramUser(Update update, Long chatId, ChatState chatState) {
+        TelegramUser telegramUser = telegramUserSessionRegistry.getOrCreateUser(chatId);
+        if (telegramUser == null || telegramUser.getCurrentChatState() == null) {
+            telegramUser = new TelegramUser()
+                    .setUpdate(update)
+                    .setChatId(chatId)
                     .setTelegramUserName(update.getMessage().getFrom() != null && update.getMessage().getFrom().getUserName() != null ? update.getMessage().getFrom().getUserName() : null)
                     .setUserName(update.getMessage().getFrom() != null && update.getMessage().getFrom().getLastName() != null ? update.getMessage().getFrom().getFirstName() + " " + update.getMessage().getFrom().getLastName() : null)
                     .setPhoneNumber(update.getMessage().getFrom() != null && update.getMessage().getContact() != null && update.getMessage().getContact().getPhoneNumber() != null ? update.getMessage().getContact().getPhoneNumber() : null)
@@ -48,6 +50,8 @@ public class TelegramUtils {
                             .setLatitude(update.getMessage().getLocation() != null ? update.getMessage().getLocation().getLatitude() : null)
                             .setLongitude(update.getMessage().getLocation() != null ? update.getMessage().getLocation().getLongitude() : null));
         }
+        telegramUser.setCurrentChatState(chatState);
+        telegramUserSessionRegistry.updateUser(telegramUser);
         return telegramUser;
     }
 
@@ -61,10 +65,12 @@ public class TelegramUtils {
         return isContain.get();
     }
 
-    public SendPhoto getStartBotReply(Update update) {
+    public SendPhoto getStartBotReply(TelegramUser telegramUser) {
         try {
+            telegramUser.setCurrentChatState(ChatState.START);
+            telegramUserSessionRegistry.updateUser(telegramUser);
             return SendPhoto.builder()
-                    .chatId(update.getMessage().getChatId())
+                    .chatId(telegramUser.getUpdate().getMessage().getChatId())
                     .photo(new InputFile(new File(telegramStepsStartImagePath)))
                     .caption(telegramStepsStartMessage)
                     .build();
@@ -74,10 +80,12 @@ public class TelegramUtils {
         }
     }
 
-    public SendMessage getVehicleTypeQuestion(Update update) {
+    public SendMessage getVehicleTypeQuestion(TelegramUser telegramUser) {
         try {
+            telegramUser.setCurrentChatState(ChatState.AWAITING_VEHICLE_TYPE_SELECTION);
+            telegramUserSessionRegistry.updateUser(telegramUser);
             return SendMessage.builder()
-                    .chatId(update.getMessage().getChatId())
+                    .chatId(telegramUser.getUpdate().getMessage().getChatId())
                     .text(telegramVehicleTypeText)
                     .replyMarkup(vehicleTypeKeyboard)
                     .build();

@@ -1,12 +1,19 @@
 package ru.ser_aleu.tow_truck_bot.telegram.enums;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
+@RequiredArgsConstructor
+@Getter
 public enum ChatState {
-    START,
-    PUT_TEXT,
-    AWAITING_LOCATION,
-    LOCATION_RECEIVED,
-    AWAITING_CAR_TYPE,
-    AWAITING_PROBLEM_DESCRIPTION,
-    CONFIRMATION,
-    WAITING_DRIVER
+    START(false),
+    PUT_TEXT(false),
+    AWAITING_VEHICLE_TYPE_SELECTION(false),
+    AWAITING_VEHICLE_TYPE_PROBLEM_SELECTION(false),
+    AWAITING_LOCATION_PROVIDING(false),
+    LOCATION_RECEIVED(false),
+    CONFIRMATION(false),
+    WAITING_DRIVER(true);
+
+    private final Boolean isFinalState;
 }

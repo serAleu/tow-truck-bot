@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public enum OrderConfirmation implements Selectable {
+public enum OrderConfirmation implements Selectable<OrderConfirmation> {
     CONFIRMED("Заказ принят"),
     REJECTED("Заказ отклонен");
 

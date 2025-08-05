@@ -15,10 +15,6 @@ public class TelegramMessageSender {
 
     private final TelegramClient telegramClient;
 
-    public TelegramMessageSender(@Value("${telegram.web.auth.token}") String botToken) {
-        this.telegramClient = new OkHttpTelegramClient(botToken);
-    }
-
     public void sendMessage(SendMessage sendMessage) {
         try {
             telegramClient.execute(sendMessage);

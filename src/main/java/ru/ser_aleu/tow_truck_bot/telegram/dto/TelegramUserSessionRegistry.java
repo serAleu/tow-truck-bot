@@ -6,6 +6,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class TelegramUserSessionRegistry {
+
     private final ConcurrentHashMap<Long, TelegramUser> userSessions = new ConcurrentHashMap<>();
 
     public TelegramUser getOrCreateUser(Long chatId) {
@@ -14,9 +15,5 @@ public class TelegramUserSessionRegistry {
 
     public void updateUser(TelegramUser user) {
         userSessions.put(user.getChatId(), user);
-    }
-
-    public TelegramUser getUser(Long chatId) {
-        return userSessions.get(chatId);
     }
 }
