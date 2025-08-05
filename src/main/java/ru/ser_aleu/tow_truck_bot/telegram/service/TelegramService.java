@@ -29,14 +29,10 @@ public class TelegramService {
 
     @Value("${telegram.web.bot-username}")
     private String webTelegramBotUsername;
-    @Value("${telegram.steps.options.error-text}")
+    @Value("${telegram.steps.error.text}")
     private String webTelegramErrorText;
     @Value("${telegram.web.admin-chat-id}")
     private Long webTelegramAdminChatId;
-    @Value("${telegram.steps.options.message}")
-    private String telegramStepsOptionsMessage;
-    @Value("${telegram.steps.options.dishes.message}")
-    private String telegramStepsOptionsDishesMessage;
 
     private final TelegramMessageSender messageSender;
     private final TelegramUtils telegramUtils;
@@ -56,7 +52,7 @@ public class TelegramService {
                         .text("Processing chat_id = " + chatId + " text = " + update.getMessage().getText())
                         .build();
             } catch (Exception e) {
-                log.error("Error processing update in chat " + chatId, e);
+                log.error("Error processing update in chat {}, {}", chatId, getStackTrace(e));
             }
         }
         if (queue.isEmpty()) {
@@ -119,29 +115,10 @@ public class TelegramService {
                 .build());
     }
 
-    private void processButtonPush(Update update) {
-        SendMessage message = SendMessage.builder()
-                .chatId(update.getCallbackQuery().getFrom().getId())
-                .text(webTelegramErrorText)
-                .build();
-        String callback = update.getCallbackQuery().getData();
-        if (callback.equalsIgnoreCase(START.getPath())) {
-            message.setText(telegramStepsOptionsMessage);
-        } else if (callback.equalsIgnoreCase(DISHES.getPath())) {
-            message.setText(telegramStepsOptionsDishesMessage);
-        } else if (callback.equalsIgnoreCase(OPTION1.getPath())) {
-            message.setText("не нажимай");
-        } else if (callback.equalsIgnoreCase(OPTION2.getPath())) {
-            message.setText("не нажимай сюда блять");
-        } else {
-            message.setText("пиздец");
-        }
-        messageSender.sendMessage(message);
-    }
-
     public void sendStartReply(Update update) {
         try {
-            messageSender.sendMessage(telegramUtils.startBot(update));
+            messageSender.sendMessage(telegramUtils.getStartBotReply(update));
+            messageSender.sendMessage(telegramUtils.getVehicleTypeQuestion(update));
         } catch (Exception e) {
             log.error("Error while sending start reply. chatId = {}, {}", update.getMessage().getChatId(), getStackTrace(e));
         }

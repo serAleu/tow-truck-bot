@@ -10,8 +10,6 @@ import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
 import ru.ser_aleu.tow_truck_bot.telegram.dto.TelegramUser;
 import ru.ser_aleu.tow_truck_bot.telegram.dto.TelegramUserLocation;
 import ru.ser_aleu.tow_truck_bot.telegram.enums.ChatState;
@@ -21,7 +19,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace;
-import static ru.ser_aleu.tow_truck_bot.telegram.enums.Callback.START;
 
 @Component
 @RequiredArgsConstructor
@@ -29,19 +26,14 @@ import static ru.ser_aleu.tow_truck_bot.telegram.enums.Callback.START;
 public class TelegramUtils {
 
     private final List<String> forbiddenWords;
+    private final InlineKeyboardMarkup vehicleTypeKeyboard;
 
-    @Value("${telegram.steps.start.button}")
-    private String telegramStepsStartButton;
+    @Value("${telegram.steps.questions.vehicle-type.text}")
+    private String telegramVehicleTypeText;
     @Value("${telegram.steps.start.message}")
     private String telegramStepsStartMessage;
     @Value("${telegram.steps.start.image-path}")
     private String telegramStepsStartImagePath;
-    @Value("${telegram.steps.options.dishes.button}")
-    private String telegramStepsOptionsDishesButton;
-    @Value("${telegram.steps.options.option1.button}")
-    private String telegramStepsOptionsOption1Button;
-    @Value("${telegram.steps.options.option2.button}")
-    private String telegramStepsOptionsOption2Button;
 
     public TelegramUser createTelegramUser(Update update, ChatState chatState) {
         TelegramUser telegramUser = new TelegramUser()
@@ -59,15 +51,6 @@ public class TelegramUtils {
         return telegramUser;
     }
 
-    public void defineMessageText(TelegramUser user, SendMessage message) {
-//        switch (user.getCurrentCommunicationStep() != null ? user.getCurrentCommunicationStep() : NO_RESPONSE) {
-//            case STUPID_GIGA_RESPONSE -> message.setText(TELEGRAM_USERS_MAP.get(user.getChatId()).getUserName() + ", " + TELEGRAM_USERS_MAP.get(user.getChatId()).getCommunications().get(STUPID_GIGA_RESPONSE));
-//            case STUPID_USER_RESPONSE -> message.setText(TELEGRAM_USERS_MAP.get(user.getChatId()).getUserName() + ", " + TELEGRAM_USERS_MAP.get(user.getChatId()).getCommunications().get(STUPID_USER_RESPONSE));
-//            case DISHES_RESPONSE -> message.setText(TELEGRAM_USERS_MAP.get(user.getChatId()).getUserName() + ", вот, что я для тебя нашел: " + TELEGRAM_USERS_MAP.get(user.getChatId()).getCommunications().get(DISHES_RESPONSE));
-//            default -> message.setText(TELEGRAM_USERS_MAP.get(user.getChatId()).getUserName() + ", " + TELEGRAM_USERS_MAP.get(user.getChatId()).getCommunications().get(NO_RESPONSE));
-//        }
-    }
-
     public boolean isRequestContainForbiddenWord(String requestText) {
         AtomicBoolean isContain = new AtomicBoolean(false);
         forbiddenWords.forEach(forbiddenWord -> {
@@ -78,33 +61,29 @@ public class TelegramUtils {
         return isContain.get();
     }
 
-    public SendPhoto startBot(Update update) {
+    public SendPhoto getStartBotReply(Update update) {
         try {
-            String startMessage = "Привет, " + update.getMessage().getFrom().getFirstName() + "! " + telegramStepsStartMessage;
             return SendPhoto.builder()
                     .chatId(update.getMessage().getChatId())
                     .photo(new InputFile(new File(telegramStepsStartImagePath)))
-                    .caption(startMessage)
-                    .replyMarkup(getStartButton())
+                    .caption(telegramStepsStartMessage)
                     .build();
         } catch (Exception e) {
-            log.error("Exception while start-message with photo sending. e = {}", getStackTrace(e));
-            return SendPhoto.builder()
-                    .chatId(update.getMessage().getChatId())
-                    .caption("Привет, " + update.getMessage().getFrom().getFirstName() + "! " + "Эта сучка сломалась.")
-                    .build();
+            log.error("Exception while start-message with photo sending. {}", getStackTrace(e));
+            return null;
         }
     }
 
-    public InlineKeyboardMarkup getStartButton() {
-        InlineKeyboardButton startButton = InlineKeyboardButton.builder()
-                .callbackData(START.getPath())
-                .text(telegramStepsStartButton)
-                .build();
-        InlineKeyboardRow inlineKeyboardRow = new InlineKeyboardRow();
-        inlineKeyboardRow.add(startButton);
-        return InlineKeyboardMarkup.builder()
-                .keyboardRow(inlineKeyboardRow)
-                .build();
+    public SendMessage getVehicleTypeQuestion(Update update) {
+        try {
+            return SendMessage.builder()
+                    .chatId(update.getMessage().getChatId())
+                    .text(telegramVehicleTypeText)
+                    .replyMarkup(vehicleTypeKeyboard)
+                    .build();
+        } catch (Exception e) {
+            log.error("Exception while vehicle type question creating. {}", getStackTrace(e));
+            return null;
+        }
     }
 }
