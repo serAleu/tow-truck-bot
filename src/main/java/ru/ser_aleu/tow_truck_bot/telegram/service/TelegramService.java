@@ -1,17 +1,19 @@
 package ru.ser_aleu.tow_truck_bot.telegram.service;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import ru.ser_aleu.tow_truck_bot.telegram.TelegramUtils;
 import ru.ser_aleu.tow_truck_bot.telegram.dto.TelegramUser;
 import ru.ser_aleu.tow_truck_bot.telegram.dto.TelegramUserLocation;
+import ru.ser_aleu.tow_truck_bot.telegram.enums.ChatState;
 import ru.ser_aleu.tow_truck_bot.telegram.web.TelegramMessageSender;
 
 import java.util.List;
@@ -21,11 +23,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace;
-import static ru.ser_aleu.tow_truck_bot.telegram.enums.Callback.*;
 
 @Service
 @Slf4j
-@RequiredArgsConstructor
 public class TelegramService {
 
     @Value("${telegram.web.bot-username}")
@@ -34,10 +34,30 @@ public class TelegramService {
     private String webTelegramErrorText;
     @Value("${telegram.web.admin-chat-id}")
     private Long webTelegramAdminChatId;
+    @Value("${telegram.steps.start.message}")
+    private String telegramStepsStartMessage;
+    @Value("${telegram.steps.start.image-path}")
+    private String telegramStepsStartImagePath;
+    @Value("${telegram.steps.questions.vehicle-type.text}")
+    private String telegramVehicleTypeText;
+    @Value("${telegram.steps.questions.vehicle-problem.text}")
+    private String telegramVehicleProblemText;
+
+    private final Map<Long, Queue<Update>> chatQueues = new ConcurrentHashMap<>();
 
     private final TelegramMessageSender messageSender;
     private final TelegramUtils telegramUtils;
-    private final Map<Long, Queue<Update>> chatQueues = new ConcurrentHashMap<>();
+    private final InlineKeyboardMarkup vehicleTypeKeyboard;
+    private final InlineKeyboardMarkup vehicleProblemTypeKeyboard;
+
+    public TelegramService(TelegramMessageSender messageSender, TelegramUtils telegramUtils,
+                           @Qualifier("vehicleTypeKeyboard") InlineKeyboardMarkup vehicleTypeKeyboard,
+                           @Qualifier("vehicleProblemTypeKeyboard") InlineKeyboardMarkup vehicleProblemTypeKeyboard) {
+        this.messageSender = messageSender;
+        this.telegramUtils = telegramUtils;
+        this.vehicleTypeKeyboard = vehicleTypeKeyboard;
+        this.vehicleProblemTypeKeyboard = vehicleProblemTypeKeyboard;
+    }
 
     public SendMessage processChatQueue(Map<Long, Queue<Update>> chatQueues, Long chatId) {
         SendMessage sendMessage = SendMessage.builder()
@@ -118,10 +138,25 @@ public class TelegramService {
 
     public void sendStartReply(TelegramUser telegramUser) {
         try {
-            messageSender.sendMessage(telegramUtils.getStartBotReply(telegramUser));
-            messageSender.sendMessage(telegramUtils.getVehicleTypeQuestion(telegramUser));
+            messageSender.sendMessage(telegramUtils.getSendPhoto(telegramUser, telegramStepsStartImagePath, telegramStepsStartMessage));
         } catch (Exception e) {
             log.error("Error while sending start reply. chatId = {}, {}", telegramUser.getUpdate().getMessage().getChatId(), getStackTrace(e));
+        }
+    }
+
+    public void sendVehicleTypeRequest(TelegramUser telegramUser) {
+        try {
+            messageSender.sendMessage(telegramUtils.getSendMessageWithKeyboard(telegramUser, telegramVehicleTypeText, vehicleTypeKeyboard));
+        } catch (Exception e) {
+            log.error("Error while sending vehicle type request. chatId = {}, {}", telegramUser.getUpdate().getMessage().getChatId(), getStackTrace(e));
+        }
+    }
+
+    public void sendVehicleProblemRequest(TelegramUser telegramUser) {
+        try {
+            messageSender.sendMessage(telegramUtils.getSendMessageWithKeyboard(telegramUser, telegramVehicleProblemText, vehicleProblemTypeKeyboard));
+        } catch (Exception e) {
+            log.error("Error while sending vehicle problem request. chatId = {}, {}", telegramUser.getUpdate().getMessage().getChatId(), getStackTrace(e));
         }
     }
 

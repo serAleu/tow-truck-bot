@@ -13,7 +13,8 @@ public class VehicleTypeSelectedEvent extends BaseEvent {
 
     private VehicleType vehicleType;
 
-    public VehicleTypeSelectedEvent(TelegramUser telegramUser) {
+    public VehicleTypeSelectedEvent(TelegramUser telegramUser, VehicleType vehicleType) {
         super(telegramUser);
+        this.vehicleType = vehicleType;
     }
 }

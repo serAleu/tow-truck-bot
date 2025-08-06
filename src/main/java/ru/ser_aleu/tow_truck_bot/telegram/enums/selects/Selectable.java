@@ -9,7 +9,15 @@ public interface Selectable<T extends Enum<T> & Selectable<T>> {
 
     String getDisplayName();
 
-    default Map<String, T> getDescriptionToEnumMap() {
+    static <T extends Enum<T> & Selectable<T>> String getAllDisplayNamesAsString(Class<T> enumClass, String delimiter) {
+        return enumClass.getEnumConstants()[0].getAllDisplayNamesAsString(delimiter);
+    }
+
+    static <T extends Enum<T> & Selectable<T>> T getEnumByDisplayName(Class<T> enumClass, String displayName) {
+        return enumClass.getEnumConstants()[0].getEnumByDisplayName(displayName);
+    }
+
+    default Map<String, T> getDisplayNameToEnumMap() {
         return Arrays.stream(getEnumClass().getEnumConstants())
                 .collect(Collectors.toMap(
                         T::getDisplayName,
@@ -17,21 +25,21 @@ public interface Selectable<T extends Enum<T> & Selectable<T>> {
                 ));
     }
 
-    default T fromDescription(String description) {
-        T result = getDescriptionToEnumMap().get(description);
+    default T getEnumByDisplayName(String displayName) {
+        T result = getDisplayNameToEnumMap().get(displayName);
         if (result == null) {
-            throw new IllegalArgumentException("Unknown description: " + description);
+            throw new IllegalArgumentException("Unknown displayName: " + displayName);
         }
         return result;
     }
 
-    default String getAllDescriptionsAsString(String delimiter) {
+    default String getAllDisplayNamesAsString(String delimiter) {
         return Arrays.stream(getEnumClass().getEnumConstants())
                 .map(T::getDisplayName)
                 .collect(Collectors.joining(delimiter));
     }
 
-    default T parseFromString(String input, String prefix) {
+    default T getEnumByDisplayNameWithPrefix(String input, String prefix) {
         if (input == null || !input.startsWith(prefix + "=")) {
             throw new IllegalArgumentException("Invalid input format. Expected '" + prefix + "=TYPE'");
         }

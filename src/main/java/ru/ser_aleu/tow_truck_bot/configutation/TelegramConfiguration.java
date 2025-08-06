@@ -9,6 +9,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
 import org.telegram.telegrambots.meta.generics.TelegramClient;
 import ru.ser_aleu.tow_truck_bot.telegram.enums.selects.Selectable;
+import ru.ser_aleu.tow_truck_bot.telegram.enums.selects.VehicleProblemType;
 import ru.ser_aleu.tow_truck_bot.telegram.enums.selects.VehicleType;
 
 import java.util.Arrays;
@@ -17,6 +18,8 @@ import java.util.stream.Collectors;
 
 @Configuration
 public class TelegramConfiguration {
+
+    private static final String DELIMITER = ";";
 
     @Value("${telegram.web.auth.token}")
     private String botToken;
@@ -28,23 +31,23 @@ public class TelegramConfiguration {
 
     @Bean("vehicleTypeKeyboard")
     public InlineKeyboardMarkup vehicleTypeKeyboard() {
-        return createKeyboard("VEHICLE_TYPE=");
+        return createKeyboard("VEHICLE_TYPE=", VehicleType.class);
     }
 
     @Bean("vehicleProblemTypeKeyboard")
     public InlineKeyboardMarkup vehicleProblemTypeKeyboard() {
-        return createKeyboard("PROBLEM_TYPE=");
+        return createKeyboard("VEHICLE_PROBLEM_TYPE=", VehicleProblemType.class);
     }
 
-    private <T extends Enum<T> & Selectable<T>> InlineKeyboardMarkup createKeyboard(String callbackPrefix, T enumValue) {
+    private <T extends Enum<T> & Selectable<T>> InlineKeyboardMarkup createKeyboard(String callbackPrefix, Class<T> enumClass) {
         return InlineKeyboardMarkup.builder()
                 .keyboard(
-                        parseButtonNamesToStringList(enumValue.getAllDisplayedNamesAsString())
+                        parseButtonNamesToStringList(Selectable.getAllDisplayNamesAsString(enumClass, DELIMITER))
                                 .stream()
                                 .map(text -> new InlineKeyboardRow(List.of(
                                         InlineKeyboardButton.builder()
                                                 .text(text)
-                                                .callbackData(callbackPrefix + enumValue..getCarTypeByDisplayedName(text))
+                                                .callbackData(callbackPrefix + Selectable.getEnumByDisplayName(enumClass, text))
                                                 .build()
                                 )))
                                 .collect(Collectors.toList())

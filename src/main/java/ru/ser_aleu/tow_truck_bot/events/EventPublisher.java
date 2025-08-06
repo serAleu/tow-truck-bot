@@ -29,6 +29,10 @@ public class EventPublisher {
         applicationEventPublisher.publishEvent(event);
     }
 
+    public void publishVehicleProblemTypeSelectedEvent(VehicleProblemTypeSelectedEvent event) {
+        applicationEventPublisher.publishEvent(event);
+    }
+
     public void publishOrderCalculationEvent(OrderCalculationEvent event) {
         applicationEventPublisher.publishEvent(event);
     }
