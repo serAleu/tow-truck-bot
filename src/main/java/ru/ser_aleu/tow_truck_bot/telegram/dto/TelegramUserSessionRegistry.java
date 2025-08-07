@@ -16,14 +16,16 @@ public class TelegramUserSessionRegistry {
         TelegramUser telegramUser = getOrCreateUser(chatId);
         if (telegramUser == null || telegramUser.getCurrentChatState() == null) {
             telegramUser = new TelegramUser()
+                    .setCurrentChatState(null)
                     .setUpdate(update)
                     .setChatId(chatId)
                     .setTelegramUserName(update.getMessage().getFrom() != null && update.getMessage().getFrom().getUserName() != null ? update.getMessage().getFrom().getUserName() : null)
                     .setUserName(update.getMessage().getFrom() != null && update.getMessage().getFrom().getLastName() != null ? update.getMessage().getFrom().getFirstName() + " " + update.getMessage().getFrom().getLastName() : null)
                     .setPhoneNumber(update.getMessage().getFrom() != null && update.getMessage().getContact() != null && update.getMessage().getContact().getPhoneNumber() != null ? update.getMessage().getContact().getPhoneNumber() : null)
-                    .setUserLocation(new TelegramUserLocation()
-                            .setLatitude(update.getMessage().getLocation() != null ? update.getMessage().getLocation().getLatitude() : null)
-                            .setLongitude(update.getMessage().getLocation() != null ? update.getMessage().getLocation().getLongitude() : null));
+                    .setCurrentLocation(new TelegramUserLocation(
+                            update.getMessage().getLocation() != null ? update.getMessage().getLocation().getLatitude() : null,
+                            update.getMessage().getLocation() != null ? update.getMessage().getLocation().getLongitude() : null
+                    ));
             log.info("New telegram user was created: {}", telegramUser.toString());
         }
         return telegramUser;
@@ -35,6 +37,6 @@ public class TelegramUserSessionRegistry {
 
     public void updateUser(TelegramUser user, String message) {
         userSessions.put(user.getChatId(), user);
-        log.info("Telegram user {} has been updated. chat_id: {}, chat_state: {}, user: {}", message, user.getChatId(), user.getCurrentChatState(), user.getTelegramUserName());
+        log.info("User info has been updated. chat_id: {}, username: {}, state: {}", user.getChatId(), user.getTelegramUserName(), message);
     }
 }

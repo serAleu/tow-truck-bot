@@ -1,4 +1,4 @@
-package ru.ser_aleu.tow_truck_bot.telegram.web.dto;
+package ru.ser_aleu.tow_truck_bot.telegram.web.telegram.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;

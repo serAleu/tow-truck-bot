@@ -9,11 +9,12 @@ import ru.ser_aleu.tow_truck_bot.telegram.dto.TelegramUserLocation;
 @Getter
 @Setter
 @Accessors(chain = true)
-public class LocationProvidedEvent extends BaseEvent {
+public class CurrentLocationProvidedEvent extends BaseEvent {
 
     private TelegramUserLocation telegramUserLocation;
 
-    public LocationProvidedEvent(TelegramUser telegramUser) {
+    public CurrentLocationProvidedEvent(TelegramUser telegramUser, TelegramUserLocation telegramUserLocation) {
         super(telegramUser);
+        this.telegramUserLocation = telegramUserLocation;
     }
 }

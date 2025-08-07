@@ -1,4 +1,4 @@
-package ru.ser_aleu.tow_truck_bot.telegram.web;
+package ru.ser_aleu.tow_truck_bot.telegram.web.telegram;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
@@ -11,7 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
-import ru.ser_aleu.tow_truck_bot.telegram.web.dto.TelegramWebhookResponse;
+import ru.ser_aleu.tow_truck_bot.telegram.web.telegram.dto.TelegramWebhookResponse;
 
 import static org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace;
 

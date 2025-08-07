@@ -29,6 +29,14 @@ public class EventPublisher {
         applicationEventPublisher.publishEvent(event);
     }
 
+    public void publishNeedDocsReplyProvidedEvent(NeedDocsReplyProvidedEvent event) {
+        applicationEventPublisher.publishEvent(event);
+    }
+
+    public void publishPaymentMethodProvidedEvent(PaymentMethodProvidedEvent event) {
+        applicationEventPublisher.publishEvent(event);
+    }
+
     public void publishVehicleProblemTypeSelectedEvent(VehicleProblemTypeSelectedEvent event) {
         applicationEventPublisher.publishEvent(event);
     }
@@ -37,7 +45,11 @@ public class EventPublisher {
         applicationEventPublisher.publishEvent(event);
     }
 
-    public void publishLocationProvidedEvent(LocationProvidedEvent event) {
+    public void publishDestinationLocationProvidedEvent(DestinationLocationProvidedEvent event) {
+        applicationEventPublisher.publishEvent(event);
+    }
+
+    public void publishCurrentLocationProvidedEvent(CurrentLocationProvidedEvent event) {
         applicationEventPublisher.publishEvent(event);
     }
 

@@ -8,9 +8,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
 import org.telegram.telegrambots.meta.generics.TelegramClient;
-import ru.ser_aleu.tow_truck_bot.telegram.enums.selects.Selectable;
-import ru.ser_aleu.tow_truck_bot.telegram.enums.selects.VehicleProblemType;
-import ru.ser_aleu.tow_truck_bot.telegram.enums.selects.VehicleType;
+import ru.ser_aleu.tow_truck_bot.telegram.enums.selects.*;
 
 import java.util.Arrays;
 import java.util.List;
@@ -37,6 +35,21 @@ public class TelegramConfiguration {
     @Bean("vehicleProblemTypeKeyboard")
     public InlineKeyboardMarkup vehicleProblemTypeKeyboard() {
         return createKeyboard("VEHICLE_PROBLEM_TYPE=", VehicleProblemType.class);
+    }
+
+    @Bean("paymentMethodTypeKeyboard")
+    public InlineKeyboardMarkup paymentMethodTypeKeyboard() {
+        return createKeyboard("PAYMENT_METHOD_TYPE=", PaymentMethodType.class);
+    }
+
+    @Bean("yesOrNoKeyboard")
+    public InlineKeyboardMarkup yesOrNoKeyboard() {
+        return createKeyboard("YES_OR_NO=", YesOrNo.class);
+    }
+
+    @Bean("confirmationKeyBoard")
+    public InlineKeyboardMarkup confirmationKeyBoard() {
+        return createKeyboard("CONFIRMATION=", OrderConfirmation.class);
     }
 
     private <T extends Enum<T> & Selectable<T>> InlineKeyboardMarkup createKeyboard(String callbackPrefix, Class<T> enumClass) {

@@ -5,17 +5,14 @@ import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import ru.ser_aleu.tow_truck_bot.telegram.enums.selects.VehicleProblemType;
-import ru.ser_aleu.tow_truck_bot.telegram.enums.selects.VehicleType;
+import ru.ser_aleu.tow_truck_bot.telegram.enums.selects.*;
 import ru.ser_aleu.tow_truck_bot.telegram.enums.ChatState;
-import ru.ser_aleu.tow_truck_bot.telegram.enums.selects.Selectable;
 
 import java.util.Map;
 
 @Getter
 @Setter
 @Accessors(chain = true)
-@ToString
 public class TelegramUser {
     private Long chatId;
     private String userName;
@@ -24,7 +21,24 @@ public class TelegramUser {
     private ChatState currentChatState;
     private VehicleType vehicleType;
     private VehicleProblemType vehicleProblemType;
-    private TelegramUserLocation userLocation;
-    private Map<ChatState, Selectable<?>> userSelections;
+    private PaymentMethodType paymentMethodType;
+    private TelegramUserLocation currentLocation;
+    private TelegramUserLocation destinationLocation;
+    private YesOrNo needDocs;
+    private Boolean orderConfirmed;
     private Update update;
+
+    @Override
+    public String toString() {
+        return "Заказ: " + '\n' +
+                "Имя пользователя = " + telegramUserName + '\n' +
+                "Номер телефона = " + phoneNumber + '\n' +
+                "Тип транспортного средства = " + (vehicleType != null ? vehicleType.getDisplayName() : "не выбрано") + '\n' +
+                "Тип проблемы = " + (vehicleProblemType != null ? vehicleProblemType.getDisplayName() : "не выбрано") + '\n' +
+                "Выбранный способ оплаты = " + (paymentMethodType != null ? paymentMethodType.getDisplayName() : "не выбрано")+ '\n' +
+                "Текущая локация транспортного средства = " + currentLocation + '\n' +
+                "Локация куда необходимо доставить транспортное средство = " + destinationLocation + '\n' +
+                "Нужен ли чек/акт = " + (needDocs != null ? needDocs.getDisplayName() : "не выбрано") + '\n' +
+                "Сумма = не посчитано";
+    }
 }

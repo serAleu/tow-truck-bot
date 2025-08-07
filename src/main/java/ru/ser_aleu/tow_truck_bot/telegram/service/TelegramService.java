@@ -12,9 +12,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import ru.ser_aleu.tow_truck_bot.telegram.TelegramUtils;
 import ru.ser_aleu.tow_truck_bot.telegram.dto.TelegramUser;
-import ru.ser_aleu.tow_truck_bot.telegram.dto.TelegramUserLocation;
-import ru.ser_aleu.tow_truck_bot.telegram.enums.ChatState;
-import ru.ser_aleu.tow_truck_bot.telegram.web.TelegramMessageSender;
+import ru.ser_aleu.tow_truck_bot.telegram.web.telegram.TelegramMessageSender;
 
 import java.util.List;
 import java.util.Map;
@@ -42,105 +40,87 @@ public class TelegramService {
     private String telegramVehicleTypeText;
     @Value("${telegram.steps.questions.vehicle-problem.text}")
     private String telegramVehicleProblemText;
-
-    private final Map<Long, Queue<Update>> chatQueues = new ConcurrentHashMap<>();
+    @Value("${telegram.steps.questions.current-location.text}")
+    private String telegramCurrentLocationText;
+    @Value("${telegram.steps.questions.destination-location.text}")
+    private String telegramDestinationLocationText;
+    @Value("${telegram.steps.questions.payment-method.text}")
+    private String telegramPaymentMethodText;
+    @Value("${telegram.steps.questions.need-docs.text}")
+    private String telegramNeedDocsText;
+    @Value("${telegram.steps.questions.order-confirmation.text}")
+    private String telegramOrderConfirmationText;
+    @Value("${telegram.steps.questions.final-reply.text}")
+    private String telegramFinalReplyText;
+    @Value("${telegram.steps.questions.text-reply.text1}")
+    private String telegramTextReplyText1;
+    @Value("${telegram.steps.questions.text-reply.text2}")
+    private String telegramTextReplyText2;
 
     private final TelegramMessageSender messageSender;
     private final TelegramUtils telegramUtils;
     private final InlineKeyboardMarkup vehicleTypeKeyboard;
     private final InlineKeyboardMarkup vehicleProblemTypeKeyboard;
+    private final InlineKeyboardMarkup paymentMethodTypeKeyboard;
+    private final InlineKeyboardMarkup yesOrNoKeyboard;
+    private final InlineKeyboardMarkup confirmationKeyBoard;
 
     public TelegramService(TelegramMessageSender messageSender, TelegramUtils telegramUtils,
                            @Qualifier("vehicleTypeKeyboard") InlineKeyboardMarkup vehicleTypeKeyboard,
-                           @Qualifier("vehicleProblemTypeKeyboard") InlineKeyboardMarkup vehicleProblemTypeKeyboard) {
+                           @Qualifier("vehicleProblemTypeKeyboard") InlineKeyboardMarkup vehicleProblemTypeKeyboard,
+                           @Qualifier("paymentMethodTypeKeyboard") InlineKeyboardMarkup paymentMethodTypeKeyboard,
+                           @Qualifier("yesOrNoKeyboard") InlineKeyboardMarkup yesOrNoKeyboard,
+                           @Qualifier("confirmationKeyBoard") InlineKeyboardMarkup confirmationKeyBoard) {
         this.messageSender = messageSender;
         this.telegramUtils = telegramUtils;
         this.vehicleTypeKeyboard = vehicleTypeKeyboard;
         this.vehicleProblemTypeKeyboard = vehicleProblemTypeKeyboard;
+        this.paymentMethodTypeKeyboard = paymentMethodTypeKeyboard;
+        this.yesOrNoKeyboard = yesOrNoKeyboard;
+        this.confirmationKeyBoard = confirmationKeyBoard;
     }
 
-    public SendMessage processChatQueue(Map<Long, Queue<Update>> chatQueues, Long chatId) {
-        SendMessage sendMessage = SendMessage.builder()
-                .chatId(chatId)
-                .text(webTelegramErrorText)
-                .build();
-        Queue<Update> queue = chatQueues.get(chatId);
-        Update update;
-        while ((update = queue.poll()) != null) {
-            try {
-                sendMessage = SendMessage.builder()
-                        .chatId(chatId)
-                        .text("Processing chat_id = " + chatId + " text = " + update.getMessage().getText())
-                        .build();
-            } catch (Exception e) {
-                log.error("Error processing update in chat {}, {}", chatId, getStackTrace(e));
-            }
+    public void sendRequestCurrentLocation(TelegramUser telegramUser) {
+        try {
+            ReplyKeyboardMarkup keyboardMarkup = ReplyKeyboardMarkup.builder()
+                    .oneTimeKeyboard(true)
+                    .resizeKeyboard(true)
+                    .build();
+            KeyboardButton locationButton = KeyboardButton.builder()
+                    .text("Поделиться местоположением")
+                    .requestLocation(true)
+                    .build();
+            KeyboardRow keyboardRow = new KeyboardRow();
+            keyboardRow.add(locationButton);
+            keyboardMarkup.setKeyboard(List.of(keyboardRow));
+
+            messageSender.sendMessage(telegramUtils.getSendMessageWithKeyboard(telegramUser, telegramCurrentLocationText, keyboardMarkup));
+        } catch (Exception e) {
+            log.error("Error while sending request current location. chatId = {}, {}", telegramUser.getChatId(), getStackTrace(e));
         }
-        if (queue.isEmpty()) {
-            chatQueues.remove(chatId, queue);
+    }
+
+    public void sendRequestDestinationLocation(TelegramUser telegramUser) {
+        try {
+            messageSender.sendMessage(telegramUtils.getSendMessage(telegramUser, telegramDestinationLocationText));
+        } catch (Exception e) {
+            log.error("Error while sending request destination location. chatId = {}, {}", telegramUser.getChatId(), getStackTrace(e));
         }
-        return sendMessage;
     }
 
-    public void processRequestLocation(Update update) {
-        ReplyKeyboardMarkup keyboardMarkup = ReplyKeyboardMarkup.builder()
-                .build();
-        keyboardMarkup.setOneTimeKeyboard(true);
-        keyboardMarkup.setResizeKeyboard(true);
-
-        KeyboardRow keyboardRow = new KeyboardRow();
-        KeyboardButton locationButton = KeyboardButton.builder()
-                .text("Поделиться местоположением")
-                .requestLocation(true)
-                .build();
-        keyboardRow.add(locationButton);
-
-        keyboardMarkup.setKeyboard(List.of(keyboardRow));
-
-        SendMessage sendMessage = SendMessage.builder()
-                .chatId(update.getMessage().getChatId().toString())
-                .text("Пожалуйста, поделитесь вашим местоположением")
-                .replyMarkup(keyboardMarkup)
-                .build();
-        messageSender.sendMessage(sendMessage);
-    }
-
-    public void processReceivedLocation(Update update) {
-        double latitude = update.getMessage().getLocation().getLatitude();
-        double longitude = update.getMessage().getLocation().getLongitude();
-        long chatId = update.getMessage().getChatId();
-
-        // Выводим в консоль полученные координаты
-        System.out.println("\n=== Получены координаты пользователя ===");
-        System.out.println("Chat ID: " + chatId);
-        System.out.println("Широта: " + latitude);
-        System.out.println("Долгота: " + longitude);
-        System.out.println("===============================\n");
-
-        TelegramUserLocation userLocation = new TelegramUserLocation()
-                .setLatitude(latitude)
-                .setLongitude(longitude);
-
-        // Здесь можно добавить вызов API 2GIS/Яндекс.Карт
-        // calculateRoute(latitude, longitude);
-
-        String responseText = String.format(
-                "Ваше местоположение получено!\nКоординаты: %.6f, %.6f\n\n" +
-                        "Теперь укажите тип транспортного средства (легковой/грузовой).",
-                userLocation.getLatitude(), userLocation.getLongitude()
-        );
-
-        messageSender.sendMessage(SendMessage.builder()
-                .chatId(chatId)
-                .text(responseText)
-                .build());
+    public void sendFinalReply(TelegramUser telegramUser) {
+        try {
+            messageSender.sendMessage(telegramUtils.getSendMessage(telegramUser, telegramFinalReplyText));
+        } catch (Exception e) {
+            log.error("Error while sending final reply. chatId = {}, {}", telegramUser.getChatId(), getStackTrace(e));
+        }
     }
 
     public void sendStartReply(TelegramUser telegramUser) {
         try {
             messageSender.sendMessage(telegramUtils.getSendPhoto(telegramUser, telegramStepsStartImagePath, telegramStepsStartMessage));
         } catch (Exception e) {
-            log.error("Error while sending start reply. chatId = {}, {}", telegramUser.getUpdate().getMessage().getChatId(), getStackTrace(e));
+            log.error("Error while sending start reply. chatId = {}, {}", telegramUser.getChatId(), getStackTrace(e));
         }
     }
 
@@ -148,7 +128,15 @@ public class TelegramService {
         try {
             messageSender.sendMessage(telegramUtils.getSendMessageWithKeyboard(telegramUser, telegramVehicleTypeText, vehicleTypeKeyboard));
         } catch (Exception e) {
-            log.error("Error while sending vehicle type request. chatId = {}, {}", telegramUser.getUpdate().getMessage().getChatId(), getStackTrace(e));
+            log.error("Error while sending vehicle type request. chatId = {}, {}", telegramUser.getChatId(), getStackTrace(e));
+        }
+    }
+
+    public void sendNeedDocsRequest(TelegramUser telegramUser) {
+        try {
+            messageSender.sendMessage(telegramUtils.getSendMessageWithKeyboard(telegramUser, telegramNeedDocsText, yesOrNoKeyboard));
+        } catch (Exception e) {
+            log.error("Error while sending need docs request. chatId = {}, {}", telegramUser.getChatId(), getStackTrace(e));
         }
     }
 
@@ -156,18 +144,32 @@ public class TelegramService {
         try {
             messageSender.sendMessage(telegramUtils.getSendMessageWithKeyboard(telegramUser, telegramVehicleProblemText, vehicleProblemTypeKeyboard));
         } catch (Exception e) {
-            log.error("Error while sending vehicle problem request. chatId = {}, {}", telegramUser.getUpdate().getMessage().getChatId(), getStackTrace(e));
+            log.error("Error while sending vehicle problem request. chatId = {}, {}", telegramUser.getChatId(), getStackTrace(e));
         }
     }
 
-    public void processTextRequest(Update update) {
-        Long chatId = update.getMessage().getChatId();
+    public void sendPaymentMethodRequest(TelegramUser telegramUser) {
         try {
-            Queue<Update> queue = chatQueues.computeIfAbsent(chatId, id -> new ConcurrentLinkedQueue<>());
-            queue.add(update);
-            messageSender.sendMessage(processChatQueue(chatQueues, chatId));
+            messageSender.sendMessage(telegramUtils.getSendMessageWithKeyboard(telegramUser, telegramPaymentMethodText, paymentMethodTypeKeyboard));
         } catch (Exception e) {
-            log.error("Error while processing text message. Message = {}, chatId = {}, {}", update.getMessage(), chatId, getStackTrace(e));
+            log.error("Error while sending payment method request. chatId = {}, {}", telegramUser.getChatId(), getStackTrace(e));
+        }
+    }
+
+    public void sendOrderConfirmation(TelegramUser telegramUser) {
+        try {
+            messageSender.sendMessage(telegramUtils.getSendMessageWithKeyboard(telegramUser, telegramOrderConfirmationText  + '\n' + '\n' + telegramUser.toString(), confirmationKeyBoard));
+        } catch (Exception e) {
+            log.error("Error while sending result. chatId = {}, {}", telegramUser.getChatId(), getStackTrace(e));
+        }
+    }
+
+    public void processTextRequest(TelegramUser telegramUser) {
+        try {
+            String message = telegramUser.getCurrentChatState() != null ? telegramTextReplyText2 : telegramTextReplyText1;
+            messageSender.sendMessage(telegramUtils.getSendMessage(telegramUser, message));
+        } catch (Exception e) {
+            log.error("Error while text request processing. chatId = {}, {}", telegramUser.getChatId(), getStackTrace(e));
         }
     }
 

@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard;
 import ru.ser_aleu.tow_truck_bot.telegram.dto.TelegramUser;
 
 import java.io.File;
@@ -36,7 +36,7 @@ public class TelegramUtils {
     public SendPhoto getSendPhoto(TelegramUser telegramUser, String imagePath, String message) {
         try {
             return SendPhoto.builder()
-                    .chatId(telegramUser.getUpdate().getMessage().getChatId())
+                    .chatId(telegramUser.getChatId())
                     .photo(new InputFile(new File(imagePath)))
                     .caption(message)
                     .build();
@@ -46,15 +46,27 @@ public class TelegramUtils {
         }
     }
 
-    public SendMessage getSendMessageWithKeyboard(TelegramUser telegramUser, String text, InlineKeyboardMarkup keyboardMarkup) {
+    public SendMessage getSendMessageWithKeyboard(TelegramUser telegramUser, String text, ReplyKeyboard keyboardMarkup) {
         try {
             return SendMessage.builder()
-                    .chatId(telegramUser.getUpdate().getMessage().getChatId())
+                    .chatId(telegramUser.getChatId())
                     .text(text)
                     .replyMarkup(keyboardMarkup)
                     .build();
         } catch (Exception e) {
             log.error("Exception while SendMessage with keyboard creating. {}", getStackTrace(e));
+            return null;
+        }
+    }
+
+    public SendMessage getSendMessage(TelegramUser telegramUser, String text) {
+        try {
+            return SendMessage.builder()
+                    .chatId(telegramUser.getChatId())
+                    .text(text)
+                    .build();
+        } catch (Exception e) {
+            log.error("Exception while SendMessage creating. {}", getStackTrace(e));
             return null;
         }
     }
