@@ -17,6 +17,7 @@ import ru.ser_aleu.tow_truck_bot.telegram.enums.selects.PaymentMethodType;
 import ru.ser_aleu.tow_truck_bot.telegram.enums.selects.VehicleProblemType;
 import ru.ser_aleu.tow_truck_bot.telegram.enums.selects.VehicleType;
 import ru.ser_aleu.tow_truck_bot.telegram.enums.selects.YesOrNo;
+import ru.ser_aleu.tow_truck_bot.utils.PhoneNumberUtils;
 
 @Slf4j
 @RestController
@@ -37,6 +38,15 @@ public class TelegramWebhookController {
             if (update.hasMessage() && update.getMessage().hasText()) {
                 if ("/start".equalsIgnoreCase(update.getMessage().getText())) {
                     eventPublisher.publishBotStartedEvent(new BotStartedEvent(telegramUserSessionRegistry.createOrGetTelegramUser(update, update.getMessage().getChatId())));
+                }
+                TelegramUser telegramUser = telegramUserSessionRegistry.createOrGetTelegramUser(update, update.getMessage().getChatId());
+                if (ChatState.AWAITING_USER_REGISTERED.equals(telegramUser.getCurrentChatState())) {
+                    String phoneNum = PhoneNumberUtils.formatRussianPhoneNumber(update.getMessage().getText());
+                    if(!StringUtils.isBlank(phoneNum)) {
+                        eventPublisher.publishUserRegisteredEvent(new UserRegisteredEvent(telegramUser, phoneNum));
+                    } else {
+                        eventPublisher.publishReRequestPhoneNumEvent(new ReRequestPhoneNumEvent(telegramUser));
+                    }
                 } else {
                     eventPublisher.publishTextMessageEvent(new TextMessageEvent(telegramUserSessionRegistry.createOrGetTelegramUser(update, update.getMessage().getChatId())));
                 }

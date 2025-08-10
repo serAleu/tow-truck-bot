@@ -21,6 +21,10 @@ public class EventPublisher {
         applicationEventPublisher.publishEvent(event);
     }
 
+    public void publishReRequestPhoneNumEvent(ReRequestPhoneNumEvent event) {
+        applicationEventPublisher.publishEvent(event);
+    }
+
     public void publishFraudDetectionEvent(FraudDetectionEvent event) {
         applicationEventPublisher.publishEvent(event);
     }

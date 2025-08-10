@@ -5,7 +5,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
@@ -15,10 +14,6 @@ import ru.ser_aleu.tow_truck_bot.telegram.dto.TelegramUser;
 import ru.ser_aleu.tow_truck_bot.telegram.web.telegram.TelegramMessageSender;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace;
 
@@ -56,6 +51,10 @@ public class TelegramService {
     private String telegramTextReplyText1;
     @Value("${telegram.steps.questions.text-reply.text2}")
     private String telegramTextReplyText2;
+    @Value("${telegram.steps.questions.phone-num.text}")
+    private String telegramPhoneNumText;
+    @Value("${telegram.steps.questions.phone-num.error}")
+    private String telegramPhoneNumError;
 
     private final TelegramMessageSender messageSender;
     private final TelegramUtils telegramUtils;
@@ -148,6 +147,22 @@ public class TelegramService {
         }
     }
 
+    public void sendIncorrectPhoneNumNotification(TelegramUser telegramUser) {
+        try {
+            messageSender.sendMessage(telegramUtils.getSendMessage(telegramUser, telegramPhoneNumError));
+        } catch (Exception e) {
+            log.error("Error while incorrect phone-num processing. chatId = {}, {}", telegramUser.getChatId(), getStackTrace(e));
+        }
+    }
+
+    public void sendPhoneNumRequest(TelegramUser telegramUser) {
+        try {
+            messageSender.sendMessage(telegramUtils.getSendMessage(telegramUser, telegramPhoneNumText));
+        } catch (Exception e) {
+            log.error("Error while phone num request processing. chatId = {}, {}", telegramUser.getChatId(), getStackTrace(e));
+        }
+    }
+
     public void sendPaymentMethodRequest(TelegramUser telegramUser) {
         try {
             messageSender.sendMessage(telegramUtils.getSendMessageWithKeyboard(telegramUser, telegramPaymentMethodText, paymentMethodTypeKeyboard));
@@ -179,5 +194,13 @@ public class TelegramService {
                 .text(userName + " - REQUEST: " + request + "\n" + "RESPONSE: " + response)
                 .build();
 //        execute(requestMessage);
+    }
+
+    public void sendOrderToAdmin(TelegramUser telegramUser) {
+        try {
+            messageSender.sendMessage(telegramUtils.getSendAdminMessage(webTelegramAdminChatId, telegramUser.toString()));
+        } catch (Exception e) {
+            log.error("Error while sending order to admin. chatId = {}, {}", telegramUser.getChatId(), getStackTrace(e));
+        }
     }
 }

@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 public enum ChatState {
     START(false),
     PUT_TEXT(false),
+    AWAITING_USER_REGISTERED(false),
     AWAITING_VEHICLE_TYPE_SELECTION(false),
     AWAITING_VEHICLE_TYPE_PROBLEM_SELECTION(false),
     AWAITING_CURRENT_LOCATION_PROVIDING(false),

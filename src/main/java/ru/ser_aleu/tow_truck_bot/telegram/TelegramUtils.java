@@ -70,4 +70,16 @@ public class TelegramUtils {
             return null;
         }
     }
+
+    public SendMessage getSendAdminMessage(Long chatId, String text) {
+        try {
+            return SendMessage.builder()
+                    .chatId(chatId)
+                    .text(text)
+                    .build();
+        } catch (Exception e) {
+            log.error("Exception while SendMessage for admin creating. {}", getStackTrace(e));
+            return null;
+        }
+    }
 }

@@ -30,13 +30,47 @@ public class TowTruckEventsListener {
             telegramService.sendStartReply(telegramUser);
             telegramUser.setCurrentChatState(ChatState.START);
             telegramUserSessionRegistry.updateUser(telegramUser, ChatState.START.toString());
-            telegramService.sendVehicleTypeRequest(telegramUser);
-            telegramUser.setCurrentChatState(ChatState.AWAITING_VEHICLE_TYPE_SELECTION);
-            telegramUserSessionRegistry.updateUser(telegramUser, ChatState.AWAITING_VEHICLE_TYPE_SELECTION.toString());
+            telegramService.sendPhoneNumRequest(telegramUser);
+            telegramUser.setCurrentChatState(ChatState.AWAITING_USER_REGISTERED);
+            telegramUserSessionRegistry.updateUser(telegramUser, ChatState.AWAITING_USER_REGISTERED.toString());
             log.info("Processing bot started event is finished: chat_id = {}, telegram_user = {}", event.getTelegramUser().getChatId(), event.getTelegramUser().getTelegramUserName());
         } catch (Exception e) {
             log.error("Failed to process bot started event: chat_id = {}, telegram_user = {}, {}", event.getTelegramUser().getChatId(), event.getTelegramUser().getTelegramUserName(), getStackTrace(e));
             throw new EventProcessingException("Bot started event processing failed.", e);
+        }
+    }
+
+    @Async("eventTaskExecutor")
+    @EventListener
+    public void handleReRequestPhoneNumEvent(ReRequestPhoneNumEvent event) {
+        try {
+            TelegramUser telegramUser = event.getTelegramUser();
+            telegramUserSessionRegistry.updateUser(telegramUser, ChatState.START.toString());
+            telegramService.sendIncorrectPhoneNumNotification(telegramUser);
+            telegramService.sendPhoneNumRequest(telegramUser);
+            telegramUser.setCurrentChatState(ChatState.AWAITING_USER_REGISTERED);
+            telegramUserSessionRegistry.updateUser(telegramUser, ChatState.AWAITING_USER_REGISTERED.toString());
+            log.info("Processing bot re-requesting phone-num event is finished: chat_id = {}, telegram_user = {}", event.getTelegramUser().getChatId(), event.getTelegramUser().getTelegramUserName());
+        } catch (Exception e) {
+            log.error("Failed to process re-requesting phone-num event: chat_id = {}, telegram_user = {}, {}", event.getTelegramUser().getChatId(), event.getTelegramUser().getTelegramUserName(), getStackTrace(e));
+            throw new EventProcessingException("Re-requesting phone-num event processing failed.", e);
+        }
+    }
+
+    @Async("eventTaskExecutor")
+    @EventListener
+    public void handleUserRegisteredEvent(UserRegisteredEvent event) {
+        try {
+            TelegramUser telegramUser = event.getTelegramUser();
+            telegramUser.setPhoneNumber(event.getPhoneNum());
+            telegramUserSessionRegistry.updateUser(telegramUser, "Phone num: " + telegramUser.getPhoneNumber());
+            telegramService.sendVehicleTypeRequest(telegramUser);
+            telegramUser.setCurrentChatState(ChatState.AWAITING_VEHICLE_TYPE_SELECTION);
+            telegramUserSessionRegistry.updateUser(telegramUser, ChatState.AWAITING_VEHICLE_TYPE_SELECTION.toString());
+            log.info("Processing user registered event is finished: chat_id = {}, telegram_user = {}", telegramUser, telegramUser.getTelegramUserName());
+        } catch (Exception e) {
+            log.error("Failed to process user registered event: chat_id = {}, telegram_user = {}, {}", event.getTelegramUser().getChatId(), event.getTelegramUser().getTelegramUserName(), getStackTrace(e));
+            throw new EventProcessingException("User registered processing failed", e);
         }
     }
 
@@ -149,6 +183,7 @@ public class TowTruckEventsListener {
             TelegramUser telegramUser = event.getTelegramUser();
             telegramUser.setOrderConfirmed(true);
             telegramUserSessionRegistry.updateUser(telegramUser, ChatState.ORDER_CONFIRMED.toString());
+            telegramService.sendOrderToAdmin(telegramUser);
             telegramService.sendFinalReply(telegramUser);
             log.info("Processing order confirmed event: chat_id = {}, telegram_user = {}", event.getTelegramUser().getChatId(), event.getTelegramUser().getTelegramUserName());
         } catch (Exception e) {
@@ -166,17 +201,6 @@ public class TowTruckEventsListener {
         } catch (Exception e) {
             log.error("Failed to text message notification event: chat_id = {}, telegram_user = {}, {}", event.getTelegramUser().getChatId(), event.getTelegramUser().getTelegramUserName(), getStackTrace(e));
             throw new EventProcessingException("Text message notification failed", e);
-        }
-    }
-
-    @Async("eventTaskExecutor")
-    @EventListener
-    public void handleUserRegisteredEvent(UserRegisteredEvent event) {
-        try {
-            log.info("Processing user registered event: chat_id = {}, telegram_user = {}", event.getTelegramUser().getChatId(), event.getTelegramUser().getTelegramUserName());
-        } catch (Exception e) {
-            log.error("Failed to process user registered event: chat_id = {}, telegram_user = {}, {}", event.getTelegramUser().getChatId(), event.getTelegramUser().getTelegramUserName(), getStackTrace(e));
-            throw new EventProcessingException("User registered processing failed", e);
         }
     }
 

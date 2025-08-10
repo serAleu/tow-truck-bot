@@ -8,12 +8,9 @@ import ru.ser_aleu.tow_truck_bot.telegram.dto.TelegramUser;
 @Getter
 @Setter
 @Accessors(chain = true)
-public class UserRegisteredEvent extends BaseEvent {
+public class ReRequestPhoneNumEvent extends BaseEvent {
 
-    private String phoneNum;
-
-    public UserRegisteredEvent(TelegramUser telegramUser, String phoneNum) {
+    public ReRequestPhoneNumEvent(TelegramUser telegramUser) {
         super(telegramUser);
-        this.phoneNum = phoneNum;
     }
 }

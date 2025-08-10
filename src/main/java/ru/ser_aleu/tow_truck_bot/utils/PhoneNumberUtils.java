@@ -1,6 +1,13 @@
 package ru.ser_aleu.tow_truck_bot.utils;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import static org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace;
+
 public class PhoneNumberUtils {
+
+    private static final Logger log = LoggerFactory.getLogger(PhoneNumberUtils.class);
 
     /**
      * Проверяет валидность российского номера телефона
@@ -44,7 +51,8 @@ public class PhoneNumberUtils {
         }
 
         // 2. Проверяем что остальные цифры не все одинаковые (например, 79999999999)
-        if (digitsOnly.chars().allMatch(c -> c == digitsOnly.charAt(0))) {
+        String finalDigitsOnly = digitsOnly;
+        if (digitsOnly.chars().allMatch(c -> c == finalDigitsOnly.charAt(0))) {
             return false;
         }
 
@@ -59,23 +67,28 @@ public class PhoneNumberUtils {
      * @throws IllegalArgumentException если номер невалидный
      */
     public static String formatRussianPhoneNumber(String phoneNumber) {
-        if (!isValidRussianPhoneNumber(phoneNumber)) {
-            throw new IllegalArgumentException("Invalid Russian phone number: " + phoneNumber);
+        try {
+            if (!isValidRussianPhoneNumber(phoneNumber)) {
+                throw new IllegalArgumentException("Invalid Russian phone number: " + phoneNumber);
+            }
+
+            // Нормализуем номер (оставляем только цифры)
+            String digitsOnly = phoneNumber.replaceAll("[^0-9]", "");
+
+            // Если номер начинается с 8, заменяем на +7
+            if (digitsOnly.startsWith("8")) {
+                digitsOnly = "7" + digitsOnly.substring(1);
+            }
+
+            // Форматируем по шаблону +7(XXX)XXX-XX-XX
+            return String.format("+7(%s)%s-%s-%s",
+                    digitsOnly.substring(1, 4),
+                    digitsOnly.substring(4, 7),
+                    digitsOnly.substring(7, 9),
+                    digitsOnly.substring(9, 11));
+        } catch (Exception e) {
+            log.error("Error while phone-num formating. {}", getStackTrace(e));
+            return null;
         }
-
-        // Нормализуем номер (оставляем только цифры)
-        String digitsOnly = phoneNumber.replaceAll("[^0-9]", "");
-
-        // Если номер начинается с 8, заменяем на +7
-        if (digitsOnly.startsWith("8")) {
-            digitsOnly = "7" + digitsOnly.substring(1);
-        }
-
-        // Форматируем по шаблону +7(XXX)XXX-XX-XX
-        return String.format("+7(%s)%s-%s-%s",
-                digitsOnly.substring(1, 4),
-                digitsOnly.substring(4, 7),
-                digitsOnly.substring(7, 9),
-                digitsOnly.substring(9, 11));
     }
 }
